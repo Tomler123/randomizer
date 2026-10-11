@@ -24,13 +24,37 @@ import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm";
   See README.md for exact steps.
 */
 const firebaseConfig = {
-  apiKey: "PASTE_YOURS_HERE",
-  authDomain: "PASTE_YOURS_HERE",
-  databaseURL: "PASTE_YOURS_HERE",
-  projectId: "PASTE_YOURS_HERE",
-  storageBucket: "PASTE_YOURS_HERE",
-  messagingSenderId: "PASTE_YOURS_HERE",
-  appId: "PASTE_YOURS_HERE"
+
+  "rules": {
+    "rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+
+        "hostUid": {
+          ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid) || data.val() === auth.uid)"
+        },
+
+        "meta": {
+          ".write": "auth != null && root.child('rooms').child($roomId).child('hostUid').val() === auth.uid"
+        },
+
+        "participants": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.hasChildren(['name', 'joinedAt']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 50"
+          }
+        },
+
+        "assignments": {
+          ".write": "auth != null && root.child('rooms').child($roomId).child('hostUid').val() === auth.uid",
+          "$uid": {
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 3"
+          }
+        }
+      }
+    }
+  }
+
 };
 
 const els = {
